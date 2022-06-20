@@ -10,6 +10,7 @@ const Home = ({ contract }) => {
     const [post, setPost] = useState('')
     const [address, setAddress] = useState('')
     const [loading, setLoading] = useState(true)
+    const [tipEth, setTipEth] = useState(0.1);
     const loadPosts = async () => {
         // Get user's address
         let address = await contract.signer.getAddress()
@@ -72,11 +73,19 @@ const Home = ({ contract }) => {
         await (await contract.uploadPost(hash)).wait()
         loadPosts()
     }
-    const tip = async (post) => {
+    const tip = async (post, tipEth) => {
         // tip post owner
-        await (await contract.tipPostOwner(post.id, { value: ethers.utils.parseEther("0.1") })).wait()
+        await (await contract.tipPostOwner(post.id, { value: ethers.utils.parseEther(tipEth) })).wait()
         loadPosts()
     }
+    const isNumber = (data) => {
+        return !isNaN(data);
+    }
+    const handleChange = (e) => {
+        if (!isNumber(e.target.value)) return;
+        setTipEth(() => e.target.value);
+    };
+
     if (loading) return (
         <div className='text-center'>
             <main style={{ padding: "1rem 0" }}>
@@ -137,11 +146,20 @@ const Home = ({ contract }) => {
                                     </Card.Title>
                                 </Card.Body>
                                 <Card.Footer className="list-group-item">
-                                    <div className="d-inline mt-auto float-start">Tip Amount: {ethers.utils.formatEther(post.tipAmount)} ETH</div>
+                                    <div className="d-inline mt-auto float-start">Tip Amount: {ethers.utils.formatEther(post.tipAmount, tipEth)} ETH</div>
                                     {address === post.author.address || !hasProfile ?
                                         null : <div className="d-inline float-end">
-                                            <Button onClick={() => tip(post)} className="px-0 py-0 font-size-16" variant="link" size="md">
-                                                Tip for 0.1 ETH
+                                            <input
+                                                style={{"textAlign": "right"}}
+                                                id="tip_eth"
+                                                name="tip_eth"
+                                                placeholder="Input tip eth"
+                                                size="10"
+                                                onChange={handleChange}
+                                            />
+                                            <label/>
+                                            <Button onClick={() => tip(post, tipEth)} className="px-0 py-0 font-size-16" variant="link" size="md">
+                                                Tip for {tipEth} ETH
                                             </Button>
                                         </div>}
                                 </Card.Footer>
